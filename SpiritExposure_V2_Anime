@@ -1,0 +1,117 @@
+// Spirit Exposure Version 2
+// Processing 3.4    Ping-Yeh Li 2017
+aimport processing.video.*;
+int sizeX=1920;   //1920
+int sizeY=1088;  //1088
+Movie mov;
+int newFrame = 0;
+int movFrameRate = 30;
+float[][] totalPix= new float[sizeX][sizeY];
+PImage prevFrame;
+// How different must a pixel be to be a "motion" pixel
+float threshold = 40;
+
+void settings() {
+  size(sizeX, sizeY);
+}
+
+
+void setup() {
+  background(0);
+  mov = new Movie(this, "MVI_0106.MOV");
+  // Pausing the video at the first frame. 
+  mov.play();
+  mov.jump(0);
+  mov.pause();
+}
+
+void movieEvent(Movie m) {
+  m.read();
+}
+
+void draw() {
+  background(0);
+  startRender();
+  println(newFrame);
+  fill(255);
+  text(getFrame() + " / " + (getLength() - 1), 10, 30);
+}
+
+void startRender() {
+  prevFrame = createImage(sizeX, sizeY, RGB);
+  prevFrame.copy(mov, 0, 0, mov.width, mov.height, 0, 0, mov.width, mov.height);
+  prevFrame.updatePixels();
+  image(prevFrame, 0, 0, mov.width, mov.height);
+  fill(255);
+  text("this is prevFrame", 10, 80);
+
+  if (newFrame < getLength() - 1) { 
+    newFrame++;
+  } else {
+    exit();
+  }
+  setFrame(newFrame); // jump to next frame
+  mov.loadPixels();
+  prevFrame.updatePixels();
+  // Begin loop to walk through every pixel
+  for (int x = 0; x < mov.width; x ++ ) {
+    for (int y = 0; y < mov.height; y ++ ) {
+      int loc = x + y*mov.width;            // Step 1, what is the 1D pixel location
+      color current = mov.pixels[loc];      // Step 2, what is the current color
+      color previous = prevFrame.pixels[loc]; // Step 3, what is the previous color
+      float r1 = red(current);   // Step 4, compare colors (previous vs. current)
+      float g1 = green(current); 
+      float b1 = blue(current);
+      float r2 = red(previous); 
+      float g2 = green(previous); 
+      float b2 = blue(previous);
+      float diff = dist(r1, g1, b1, r2, g2, b2);
+      // Step 5, How different are the colors?  If the color at that pixel has changed, + 1 to it's int value.
+      if (diff > threshold) {
+        if (totalPix[x][y]<255) {
+          totalPix[x][y]=totalPix[x][y]+2;
+        }
+      }
+    }
+  }
+  drawimg();
+  saveFrame("SpiritExpo_TIFFs/MVI_0106/pic-#####.tif");   // save tif file is quicker (but files are larger)
+  if (mousePressed) {
+    // save("Output/0106_2.png");
+    exit();
+  }
+}
+
+int getFrame() {    
+  return ceil(mov.time() * 30) - 1;
+}
+
+void setFrame(int n) {
+  mov.play();
+  // The duration of a single frame:
+  float frameDuration = 1.0 / movFrameRate;
+  // We move to the middle of the frame by adding 0.5:
+  float where = (n + 0.5) * frameDuration; 
+  // Taking into account border effects:
+  float diff = mov.duration() - where;
+  if (diff < 0) {
+    where += diff - 0.25 * frameDuration;
+  }
+  mov.jump(where);
+  mov.pause();
+}  
+
+int getLength() {
+  return int(mov.duration() * movFrameRate);
+}  
+
+void drawimg() {
+  loadPixels();
+  for (int x = 0; x < mov.width; x ++ ) {
+    for (int y = 0; y < mov.height; y ++ ) {
+      // monotone picture:
+      pixels[x+(y*sizeX)]=color(totalPix[x][y]);
+    }
+  }
+  updatePixels();
+}
