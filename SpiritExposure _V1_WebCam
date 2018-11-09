@@ -1,4 +1,4 @@
-// Processing 2.0b6
+// Processing Code 2.0b6
 // Ping-Yeh Li 2014
 PFont font;
 int sizeX=1280;
