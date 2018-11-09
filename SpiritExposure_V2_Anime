@@ -1,5 +1,5 @@
 // Spirit Exposure Version 2
-// Processing 3.4    Ping-Yeh Li 2017
+// Processing Code 3.4    Ping-Yeh Li 2017
 aimport processing.video.*;
 int sizeX=1920;   //1920
 int sizeY=1088;  //1088
